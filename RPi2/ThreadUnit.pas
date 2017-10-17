@@ -16,6 +16,7 @@ uses
   Platform,
   Threads,
   SysUtils,
+  GPIOToggleUnit,
   Console;   {Include the console unit so we can output logging to the screen}
 
   
@@ -119,6 +120,7 @@ begin
   example again}
  SchedulerAllocationDisable(CPU_ID_3);
  ConsoleWindowWriteLn(Handle,'Disabled scheduler allocation for ' + CPUIDToString(CPU_ID_3));
+ ConsoleWindowWriteLn(Handle,'Now using GPIOToggleUnit which has 2 procedures GPIOPinOn(pin) & GPIOPinOff(pin)');
  
  
  {Our final step in the process is to migrate all of the other threads away from our dedicated CPU
@@ -438,6 +440,8 @@ begin
    {Don't think the counter values per loop were as high as you expected? Try uncommenting this
     line and see how many loop iterations happen per second with no other code}
    //Inc(Counter);
+   GPIOPinOn(21);
+   GPIOPinOff(21);
   end;
   
  {If you really want to see just how fast a single CPU can go, try commenting out the loop above
