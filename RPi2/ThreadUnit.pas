@@ -329,8 +329,9 @@ var
  CurrentCount:Int64;
  Message:TMessage;
 begin
+
  Result:=0;
- 
+ GPIOFunctionSelect(GPIO_PIN_21,GPIO_FUNCTION_OUT);
  {Do a loop while we are not on our dedicated CPU}
  ConsoleWindowWriteLn(RightWindow,'Waiting for migration to ' + CPUIDToString(CPU_ID_3));
  while ThreadGetCPU(ThreadGetCurrent) <> CPU_ID_3 do

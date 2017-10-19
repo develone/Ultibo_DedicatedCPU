@@ -331,7 +331,7 @@ var
  Pininput:LongWord;
 begin
  Result:=0;
- 
+ GPIOFunctionSelect(GPIO_PIN_21,GPIO_FUNCTION_IN);
  {Do a loop while we are not on our dedicated CPU}
  ConsoleWindowWriteLn(RightWindow,'Waiting for migration to ' + CPUIDToString(CPU_ID_3));
  while ThreadGetCPU(ThreadGetCurrent) <> CPU_ID_3 do
