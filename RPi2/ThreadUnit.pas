@@ -16,7 +16,8 @@ uses
   Platform,
   Threads,
   SysUtils,
-  GPIOToggleUnit,
+  BCM2836,
+  {GPIOToggleUnit,}
   Console;   {Include the console unit so we can output logging to the screen}
 
   
@@ -436,14 +437,14 @@ begin
   mode as required in order to interact with the rest of Ultibo core.
   
   Have fun!}  
- while True do
-  begin
+ {while True do
+  begin new 10/21/17}
    {Don't think the counter values per loop were as high as you expected? Try uncommenting this
     line and see how many loop iterations happen per second with no other code}
    //Inc(Counter);
-   GPIOPinOn(21);
+   {GPIOPinOn(21); new 10/21/17
    GPIOPinOff(21);
-  end;
+  end;}
   
  {If you really want to see just how fast a single CPU can go, try commenting out the loop above
   so that the dedicated thread executes this small piece of inline assembler instead. This loop 
@@ -451,24 +452,49 @@ begin
   the value of the counter as many times as it possibly can per second}
  {$IFDEF CPUARM}  
  asm
-  //Register usage
-  //r0 = Counter address
-  //r1 = Counter value
-  
+  //R0 = Counter address
+  //R1 = Counter value
+  //R2 = GPIO address
+  //R3 = GPIO output value
+
   //Load the counter address and value
   ldr r0, .LCounter
   ldr r1, [r0]
-  
+
+  //Load the GPIO address and value
+  ldr r2, =BCM2836_GPIO_REGS_BASE
+  mov r3, #0x200000
+
   .LLoop:
   //Increment and store the counter
   add r1, r1, #1
   str r1, [r0]
-  
+
+  //Do a small delay
+  mov r4, #30
+  .LWait1:
+  sub r4, r4, #1
+  cmp r4, #0
+  bne .LWait1
+
+  //Turn the pin on
+  str r3, [r2, #BCM2836_GPSET0]
+
+  //Do a small delay
+  mov r4, #30
+  .LWait2:
+  sub r4, r4, #1
+  cmp r4, #0
+  bne .LWait2
+
+  //Turn the pin off
+  str r3, [r2, #BCM2836_GPCLR0]
+
   //Repeat the loop
   b .LLoop
-  
+
   .LCounter:
-  .long	Counter
+  .long   Counter
  end;
  {$ENDIF CPUARM}   
 end;
