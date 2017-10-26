@@ -370,7 +370,7 @@ begin
    {See how much time has elapsed since we started the loop, 30,000 milliseconds (or 30 seconds)
     should be enough time for you to see what is happening but you can extend it if you like}
    CurrentCount:=GetTickCount64;
-   if CurrentCount > (StartCount + 30000) then Break;
+   if CurrentCount > (StartCount + 5000) then Break;
    
    {There's no need to sleep on each loop, this is our CPU and no one can tell us what to do.
    
@@ -419,13 +419,13 @@ begin
 
    {Check our tick count for elapsed time}
    CurrentCount:=GetTickCount64;
-   if CurrentCount > (StartCount + 30000) then Break;
+   if CurrentCount > (StartCount + 5000) then Break;
    
    {No sleeping here, this is a realtime only thread. Seriously you cannot sleep in this scenario, go
     on try it if you don't believe me and see what happens}
   end;
 
-  
+  ConsoleWindowWriteLn(RightWindow,'Starting asm  toggle ');
  {That's the end of the example and now you can explore on your own
  
   Remember, in the dedicated CPU scenario there are very strict rules about what functions you can
