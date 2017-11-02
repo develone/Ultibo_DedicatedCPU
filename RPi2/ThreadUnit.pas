@@ -332,7 +332,7 @@ var
 begin
 
  Result:=0;
- GPIOFunctionSelect(GPIO_PIN_21,GPIO_FUNCTION_OUT);
+ GPIOFunctionSelect(GPIO_PIN_16,GPIO_FUNCTION_OUT);
  {Do a loop while we are not on our dedicated CPU}
  ConsoleWindowWriteLn(RightWindow,'Waiting for migration to ' + CPUIDToString(CPU_ID_3));
  while ThreadGetCPU(ThreadGetCurrent) <> CPU_ID_3 do
@@ -463,7 +463,7 @@ begin
 
   //Load the GPIO address and value
   ldr r2, =BCM2836_GPIO_REGS_BASE
-  mov r3, #0x200000
+  mov r3, #0x10000
 
   .LLoop:
   //Increment and store the counter
