@@ -66,6 +66,9 @@
       </Debugging>
       <LinkSmart Value="True"/>
     </Linking>
+    <Other>
+      <CustomOptions Value="-an -al"/>
+    </Other>
   </CompilerOptions>
   <Debugging>
     <Exceptions Count="3">

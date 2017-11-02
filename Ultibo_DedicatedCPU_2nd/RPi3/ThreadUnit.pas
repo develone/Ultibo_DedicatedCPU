@@ -331,7 +331,7 @@ var
  Pininput:LongWord;
 begin
  Result:=0;
- GPIOFunctionSelect(GPIO_PIN_21,GPIO_FUNCTION_IN);
+ GPIOFunctionSelect(GPIO_PIN_16,GPIO_FUNCTION_IN);
  {Do a loop while we are not on our dedicated CPU}
  ConsoleWindowWriteLn(RightWindow,'Waiting for migration to ' + CPUIDToString(CPU_ID_3));
  while ThreadGetCPU(ThreadGetCurrent) <> CPU_ID_3 do
@@ -369,7 +369,7 @@ begin
    {See how much time has elapsed since we started the loop, 30,000 milliseconds (or 30 seconds)
     should be enough time for you to see what is happening but you can extend it if you like}
    CurrentCount:=GetTickCount64;
-   if CurrentCount > (StartCount + 30000) then Break;
+   if CurrentCount > (StartCount + 5000) then Break;
    
    {There's no need to sleep on each loop, this is our CPU and no one can tell us what to do.
    
@@ -418,7 +418,7 @@ begin
 
    {Check our tick count for elapsed time}
    CurrentCount:=GetTickCount64;
-   if CurrentCount > (StartCount + 30000) then Break;
+   if CurrentCount > (StartCount + 5000) then Break;
    
    {No sleeping here, this is a realtime only thread. Seriously you cannot sleep in this scenario, go
     on try it if you don't believe me and see what happens}
@@ -440,13 +440,13 @@ begin
   begin
    {Don't think the counter values per loop were as high as you expected? Try uncommenting this
     line and see how many loop iterations happen per second with no other code}
-    Pininput:= GPIOPinRead(21);
+    Pininput:= GPIOPinRead(16);
     if Pininput = 1 then
       begin
         Inc(Counter);
         while Pininput = 1 do
          begin
-           Pininput:= GPIOPinRead(21);
+           Pininput:= GPIOPinRead(16);
          end;
       end
 
