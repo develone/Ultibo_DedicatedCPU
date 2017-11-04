@@ -16,7 +16,8 @@ uses
   Platform,
   Threads,
   SysUtils,
-  GPIOToggleUnit,
+  BCM2837, {11/2/17}
+  {GPIOToggleUnit,11/2/17}
   Console;   {Include the console unit so we can output logging to the screen}
 
   
@@ -423,8 +424,8 @@ begin
    {No sleeping here, this is a realtime only thread. Seriously you cannot sleep in this scenario, go
     on try it if you don't believe me and see what happens}
   end;
-
-  
+  Counter:=0;
+  ConsoleWindowWriteLn(RightWindow,'Starting asm read toggle ');
  {That's the end of the example and now you can explore on your own
  
   Remember, in the dedicated CPU scenario there are very strict rules about what functions you can
@@ -436,11 +437,11 @@ begin
   mode as required in order to interact with the rest of Ultibo core.
   
   Have fun!}  
- while True do
-  begin
+ {while True do
+  begin 11/2/17}
    {Don't think the counter values per loop were as high as you expected? Try uncommenting this
     line and see how many loop iterations happen per second with no other code}
-    Pininput:= GPIOPinRead(16);
+    {Pininput:= GPIOPinRead(16);
     if Pininput = 1 then
       begin
         Inc(Counter);
@@ -450,7 +451,7 @@ begin
          end;
       end
 
-  end;
+  end; 11/2/17}
   
  {If you really want to see just how fast a single CPU can go, try commenting out the loop above
   so that the dedicated thread executes this small piece of inline assembler instead. This loop 
@@ -461,21 +462,39 @@ begin
   //Register usage
   //r0 = Counter address
   //r1 = Counter value
+  //R2 = GPIO address
+  //R3 = GPIO output value
   
   //Load the counter address and value
   ldr r0, .LCounter
   ldr r1, [r0]
-  
+
+  //Load the GPIO address and value
+  ldr r2, =BCM2837_GPIO_REGS_BASE
+  //mov r3, #0x10000
+
   .LLoop:
   //Increment and store the counter
   add r1, r1, #1
   str r1, [r0]
-  
+
+  //Do a small delay
+  mov r4, #30
+  .LWait1:
+  sub r4, r4, #1
+  cmp r4, #0
+  bne .LWait1
+
+  .LHI:
+  //Read pin
+  ldr r3, [r2 ,   #BCM2837_GPLEV0 ]
+  cmp r3, #0x10000
+  bne .LHI
   //Repeat the loop
   b .LLoop
-  
+
   .LCounter:
-  .long	Counter
+  .long   Counter
  end;
  {$ENDIF CPUARM}   
 end;
