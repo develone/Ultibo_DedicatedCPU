@@ -37,13 +37,23 @@ uses
   Console,
   HTTP,         {Include HTTP and WebStatus so we can see from a web browser what is happening}
   WebStatus,
-  ThreadUnit;   {Include our thread unit which contains most of the example}
-
+  ThreadUnit,   {Include our thread unit which contains most of the example}
+  uTFTP,
+  Winsock2,
+  { needed to use ultibo-tftp  }
+  { needed for telnet }
+      Shell,
+     ShellFilesystem,
+     ShellUpdate,
+     RemoteShell;
+  { needed for telnet }
   
 var
  LeftWindow:TWindowHandle;
  HTTPListener:THTTPListener;
- 
+ { needed to use ultibo-tftp  }
+ TCP : TWinsock2TCPClient;
+ IPAddress : string;
  
 begin
  {Create a console window to show what is happening}
