@@ -1,4 +1,4 @@
-unit ThreadUnit;
+unit ThreadUnit_GPS;
 
 {$mode objfpc}{$H+}
 
@@ -29,7 +29,7 @@ implementation
 
 
 var
- Counter:LongWord;
+ Countergps:LongWord;
  RightWindow:TWindowHandle;
  
 
@@ -87,20 +87,20 @@ begin
  ConsoleWindowWriteLn(Handle,'Set name of thread to "Dedicated CPU Thread"');
  
  
- {Now we can set the affinity of our thread to CPU 3 and wait for the scheduler to migrate it for us}
- ThreadSetAffinity(DedicatedThread,CPU_AFFINITY_3);
- ConsoleWindowWriteLn(Handle,'Set affinity of dedicated CPU thread to ' + CPUIDToString(CPU_ID_3));
+ {Now we can set the affinity of our thread to CPU 2 and wait for the scheduler to migrate it for us}
+ ThreadSetAffinity(DedicatedThread,CPU_AFFINITY_2);
+ ConsoleWindowWriteLn(Handle,'Set affinity of dedicated CPU thread to ' + CPUIDToString(CPU_ID_2));
  
  
  {Migrations happen during context switches, so our thread may not be instantly on the new CPU, instead
   we check where our thread is and wait for it to migrate if needed}
  CurrentCPU:=ThreadGetCPU(DedicatedThread);
- if CurrentCPU <> CPU_ID_3 then
+ if CurrentCPU <> CPU_ID_2 then
   begin
    ConsoleWindowWriteLn(Handle,'Thread ' + IntToHex(DedicatedThread,8) + ' currently on ' + CPUIDToString(CurrentCPU));
    
    {Keep checking until it is migrated}
-   while ThreadGetCPU(DedicatedThread) <> CPU_ID_3 do
+   while ThreadGetCPU(DedicatedThread) <> CPU_ID_2 do
     begin
      Sleep(1000);
     end;
@@ -119,8 +119,8 @@ begin
   will also see this function being called during initialization. As part of understanding how 
   this process works you should try commenting that out and see the difference when you run the 
   example again}
- SchedulerAllocationDisable(CPU_ID_3);
- ConsoleWindowWriteLn(Handle,'Disabled scheduler allocation for ' + CPUIDToString(CPU_ID_3));
+ SchedulerAllocationDisable(CPU_ID_2);
+ ConsoleWindowWriteLn(Handle,'Disabled scheduler allocation for ' + CPUIDToString(CPU_ID_2));
  ConsoleWindowWriteLn(Handle,'Now using asm language on RPi2 to toggle gpio ');
  
  
@@ -149,7 +149,7 @@ begin
       begin
       
        {Check the CPU to see if it is on CPU 3}
-       if ThreadCurrent^.CPU = CPU_ID_3 then
+       if ThreadCurrent^.CPU = CPU_ID_2 then
         begin
         
          {In our normal configuration there are 4 threads on each CPU that we cannot migrate because
@@ -180,25 +180,25 @@ begin
               of the FIQ thread. In the same way the system uses the SWI thread to perform software interrupts}
          
          {Check for one of the special threads and if it is not then ask it to migrate}
-         if ThreadCurrent^.Handle = SchedulerGetThreadHandle(CPU_ID_3,THREAD_TYPE_IDLE) then
+         if ThreadCurrent^.Handle = SchedulerGetThreadHandle(CPU_ID_2,THREAD_TYPE_IDLE) then
           begin
           
            {This is the idle thread, we can't migrate this one}
            ConsoleWindowWriteLn(Handle,'Skipping migration of idle thread "' + ThreadGetName(ThreadCurrent^.Handle) + '"');
           end
-         else if ThreadCurrent^.Handle = SchedulerGetThreadHandle(CPU_ID_3,THREAD_TYPE_IRQ) then  
+         else if ThreadCurrent^.Handle = SchedulerGetThreadHandle(CPU_ID_2,THREAD_TYPE_IRQ) then  
           begin
           
            {This one is the IRQ thread and it can't be migrated either}
            ConsoleWindowWriteLn(Handle,'Skipping migration of IRQ thread "' + ThreadGetName(ThreadCurrent^.Handle) + '"');
           end
-         else if ThreadCurrent^.Handle = SchedulerGetThreadHandle(CPU_ID_3,THREAD_TYPE_FIQ) then  
+         else if ThreadCurrent^.Handle = SchedulerGetThreadHandle(CPU_ID_2,THREAD_TYPE_FIQ) then  
           begin
           
            {FIQ threads also can't be migrated but they never run so it doesn't matter}
            ConsoleWindowWriteLn(Handle,'Skipping migration of FIQ thread "' + ThreadGetName(ThreadCurrent^.Handle) + '"');
           end
-         else if ThreadCurrent^.Handle = SchedulerGetThreadHandle(CPU_ID_3,THREAD_TYPE_SWI) then    
+         else if ThreadCurrent^.Handle = SchedulerGetThreadHandle(CPU_ID_2,THREAD_TYPE_SWI) then    
           begin
           
            {And the SWI threads are the same so we can ignore them as well}
@@ -234,7 +234,7 @@ begin
   end; 
   
  {Print the number of threads that we asked to migrate}
- ConsoleWindowWriteLn(Handle,'Migrated ' + IntToStr(Count) +  ' threads from ' + CPUIDToString(CPU_ID_3));
+ ConsoleWindowWriteLn(Handle,'Migrated ' + IntToStr(Count) +  ' threads from ' + CPUIDToString(CPU_ID_2));
  
  {As we saw above, thread migrations happen during context switches. So even though we asked each of 
   the threads above to migrate they may not neccessarily have done that if they haven't performed a
@@ -254,12 +254,12 @@ begin
    while ThreadCurrent <> nil do
     begin
      {Check the handle and the CPU}
-     if (ThreadCurrent^.Handle <> DedicatedThread) and (ThreadCurrent^.CPU = CPU_ID_3) then
+     if (ThreadCurrent^.Handle <> DedicatedThread) and (ThreadCurrent^.CPU = CPU_ID_2) then
       begin
-       if (ThreadCurrent^.Handle <> SchedulerGetThreadHandle(CPU_ID_3,THREAD_TYPE_IDLE))
-        and (ThreadCurrent^.Handle <> SchedulerGetThreadHandle(CPU_ID_3,THREAD_TYPE_IRQ))
-        and (ThreadCurrent^.Handle <> SchedulerGetThreadHandle(CPU_ID_3,THREAD_TYPE_FIQ))
-        and (ThreadCurrent^.Handle <> SchedulerGetThreadHandle(CPU_ID_3,THREAD_TYPE_SWI)) then
+       if (ThreadCurrent^.Handle <> SchedulerGetThreadHandle(CPU_ID_2,THREAD_TYPE_IDLE))
+        and (ThreadCurrent^.Handle <> SchedulerGetThreadHandle(CPU_ID_2,THREAD_TYPE_IRQ))
+        and (ThreadCurrent^.Handle <> SchedulerGetThreadHandle(CPU_ID_2,THREAD_TYPE_FIQ))
+        and (ThreadCurrent^.Handle <> SchedulerGetThreadHandle(CPU_ID_2,THREAD_TYPE_SWI)) then
         begin
          {Add one to our count}
          Inc(Count);
@@ -283,10 +283,10 @@ begin
   Can you see why they didn't migrate?}
  if Count <> 0 then
   begin
-   ConsoleWindowWriteLn(Handle,'Error, ' + IntToStr(Count) +  ' threads remaining on ' + CPUIDToString(CPU_ID_3));
+   ConsoleWindowWriteLn(Handle,'Error, ' + IntToStr(Count) +  ' threads remaining on ' + CPUIDToString(CPU_ID_2));
    Exit;
   end;
- ConsoleWindowWriteLn(Handle,'No threads remaining on ' + CPUIDToString(CPU_ID_3) + ' proceeding with example');
+ ConsoleWindowWriteLn(Handle,'No threads remaining on ' + CPUIDToString(CPU_ID_2) + ' proceeding with example');
  
  
  {Send a message to our dedicated CPU thread to tell it we are done and it can go ahead}
@@ -301,18 +301,18 @@ begin
  
  
  {Because our dedicated CPU thread won't be able to print on the console, we'll go into a loop here
-  and print the value of the counter variable that it is incrementing. That way you can see just how 
+  and print the value of the Countergps variable that it is incrementing. That way you can see just how 
   many loops it can do in a second}
  Last:=0;
  while True do
   begin
    {Check if anything has happened}
-   if Last <> Counter then
+   if Last <> Countergps then
     begin
-     {Print the counter value on the right window}
-     ConsoleWindowWriteLn(RightWindow,'Counter value is ' + IntToStr(Counter) + ', Difference is ' + IntToStr(Counter - Last));
+     {Print the Countergps value on the right window}
+     ConsoleWindowWriteLn(RightWindow,'Countergps value is ' + IntToStr(Countergps) + ', Difference is ' + IntToStr(Countergps - Last));
     end;
-   Last:=Counter; 
+   Last:=Countergps; 
    
    {Wait one second}
    Sleep(1000);
@@ -334,8 +334,8 @@ begin
  Result:=0;
  GPIOFunctionSelect(GPIO_PIN_16,GPIO_FUNCTION_OUT);
  {Do a loop while we are not on our dedicated CPU}
- ConsoleWindowWriteLn(RightWindow,'Waiting for migration to ' + CPUIDToString(CPU_ID_3));
- while ThreadGetCPU(ThreadGetCurrent) <> CPU_ID_3 do
+ ConsoleWindowWriteLn(RightWindow,'Waiting for migration to ' + CPUIDToString(CPU_ID_2));
+ while ThreadGetCPU(ThreadGetCurrent) <> CPU_ID_2 do
   begin
    Sleep(1000);
   end;
@@ -351,8 +351,8 @@ begin
   interrupt us at all, once we do this we can no longer call any function that
   will cause our thread to sleep or yield since without preemption the scheduler
   will not be able to switch back to our thread}
- ConsoleWindowWriteLn(RightWindow,'Disabling scheduler preemption on ' + CPUIDToString(CPU_ID_3));
- SchedulerPreemptDisable(CPU_ID_3);
+ ConsoleWindowWriteLn(RightWindow,'Disabling scheduler preemption on ' + CPUIDToString(CPU_ID_2));
+ SchedulerPreemptDisable(CPU_ID_2);
   
   
  {Go into our loop doing whatever we want, no one else is here so we can break all the rules!
@@ -360,12 +360,12 @@ begin
   Now that preemption is disabled the scheduler interrupts will still occur but the scheduler
   will not switch away from our thread. If you look at the "CPU" page in web status while this
   is happening you will see the CPU utilization runs at 100% for CPU 3}
- Counter:=0;
+ Countergps:=0;
  StartCount:=GetTickCount64;
  while True do
   begin
-   {Increment our loop counter}
-   Inc(Counter);
+   {Increment our loop Countergps}
+   Inc(Countergps);
    
    {See how much time has elapsed since we started the loop, 30,000 milliseconds (or 30 seconds)
     should be enough time for you to see what is happening but you can extend it if you like}
@@ -381,8 +381,8 @@ begin
  {We can switch back and forth between dedicated and standard mode which can be useful to allow
   using other functions that cannot be called while preemption is disabled. Let's reenable the
   scheduler preemption and then print something on the console}
- SchedulerPreemptEnable(CPU_ID_3);
- ConsoleWindowWriteLn(RightWindow,'Enabled scheduler preemption on ' + CPUIDToString(CPU_ID_3));
+ SchedulerPreemptEnable(CPU_ID_2);
+ ConsoleWindowWriteLn(RightWindow,'Enabled scheduler preemption on ' + CPUIDToString(CPU_ID_2));
 
  
  {With preemption disabled the scheduler interrupts were still occuring, in a realtime scenario
@@ -393,7 +393,7 @@ begin
   acquire a lock will most likely deadlock the CPU and never ever ever return!
   
   Do you think you understood that? Read it again just to be sure!}
- ConsoleWindowWriteLn(RightWindow,'Disabling interrupts and fast interrupts on ' + CPUIDToString(CPU_ID_3));
+ ConsoleWindowWriteLn(RightWindow,'Disabling interrupts and fast interrupts on ' + CPUIDToString(CPU_ID_2));
  DisableFIQ;
  DisableIRQ;
 
@@ -410,12 +410,12 @@ begin
   Got that, maybe not but it will make more sense when you need to use it!}
  
  {Go back to looping and counting, the main thread is still watching so it will continue printing
-  the counter values while we do this as well}
+  the Countergps values while we do this as well}
  StartCount:=GetTickCount64;
  while True do
   begin
-   {Increment our loop counter}
-   Inc(Counter);
+   {Increment our loop Countergps}
+   Inc(Countergps);
 
    {Check our tick count for elapsed time}
    CurrentCount:=GetTickCount64;
@@ -437,28 +437,28 @@ begin
   mode as required in order to interact with the rest of Ultibo core.
   
   Have fun!}  
- {while True do
-  begin new 10/21/17}
-   {Don't think the counter values per loop were as high as you expected? Try uncommenting this
+ while True do
+  begin 
+   {Don't think the Countergps values per loop were as high as you expected? Try uncommenting this
     line and see how many loop iterations happen per second with no other code}
-   //Inc(Counter);
-   {GPIOPinOn(21); new 10/21/17
-   GPIOPinOff(21);
-  end;}
+   Inc(Countergps);
+   //GPIOPinOn(21); 
+   //GPIOPinOff(21);
+  end;
   
  {If you really want to see just how fast a single CPU can go, try commenting out the loop above
   so that the dedicated thread executes this small piece of inline assembler instead. This loop 
   only contains 3 ARM instructions so it isn't very real world but it does increment and store
-  the value of the counter as many times as it possibly can per second}
+  the value of the Countergps as many times as it possibly can per second}
  {$IFDEF CPUARM}  
  asm
-  //R0 = Counter address
-  //R1 = Counter value
+  //R0 = Countergps address
+  //R1 = Countergps value
   //R2 = GPIO address
   //R3 = GPIO output value
 
-  //Load the counter address and value
-  ldr r0, .LCounter
+  //Load the Countergps address and value
+  ldr r0, .LCountergps
   ldr r1, [r0]
 
   //Load the GPIO address and value
@@ -466,7 +466,7 @@ begin
   mov r3, #0x10000
 
   .LLoop:
-  //Increment and store the counter
+  //Increment and store the Countergps
   add r1, r1, #1
   str r1, [r0]
 
@@ -493,8 +493,8 @@ begin
   //Repeat the loop
   b .LLoop
 
-  .LCounter:
-  .long   Counter
+  .LCountergps:
+  .long   Countergps
  end;
  {$ENDIF CPUARM}   
 end;
