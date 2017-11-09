@@ -30,6 +30,7 @@ implementation
 
 var
  Counter:LongWord;
+ GPIO_IN:LongWord;
  RightWindow:TWindowHandle;
  
 
@@ -121,8 +122,8 @@ begin
   example again}
  SchedulerAllocationDisable(CPU_ID_3);
  ConsoleWindowWriteLn(Handle,'Disabled scheduler allocation for ' + CPUIDToString(CPU_ID_3));
- ConsoleWindowWriteLn(Handle,'Now using GPIOToggleUnit on RPi3 which has 2 procedures GPIOPinOn(pin) & GPIOPinOff(pin)');
- ConsoleWindowWriteLn(Handle,'Now using GPIOToggleUnit on RPi3 which has 1 function GPIOPinRead');
+ ConsoleWindowWriteLn(Handle,'Now using asm language on RPi3 to count RPi2 toggles');
+ //ConsoleWindowWriteLn(Handle,'Now using GPIOToggleUnit on RPi3 which has 1 function GPIOPinRead');
  
  {Our final step in the process is to migrate all of the other threads away from our dedicated CPU
   so they are able to continue running without any impact. To do this we need to know what threads
@@ -284,6 +285,7 @@ begin
  if Count <> 0 then
   begin
    ConsoleWindowWriteLn(Handle,'Error, ' + IntToStr(Count) +  ' threads remaining on ' + CPUIDToString(CPU_ID_3));
+
    Exit;
   end;
  ConsoleWindowWriteLn(Handle,'No threads remaining on ' + CPUIDToString(CPU_ID_3) + ' proceeding with example');
@@ -311,6 +313,7 @@ begin
     begin
      {Print the counter value on the right window}
      ConsoleWindowWriteLn(RightWindow,'Counter value is ' + IntToStr(Counter) + ', Difference is ' + IntToStr(Counter - Last));
+     ConsoleWindowWriteLn(Handle,'GPIO_IN value is ' + IntToStr(GPIO_IN)) ;
     end;
    Last:=Counter; 
    
@@ -464,7 +467,7 @@ begin
   //r1 = Counter value
   //R2 = GPIO address
   //R3 = GPIO output value
-  
+   .LLoop:
   //Load the counter address and value
   ldr r0, .LCounter
   ldr r1, [r0]
@@ -473,28 +476,39 @@ begin
   ldr r2, =BCM2837_GPIO_REGS_BASE
   //mov r3, #0x10000
 
-  .LLoop:
+
   //Increment and store the counter
   add r1, r1, #1
   str r1, [r0]
 
-  //Do a small delay
-  mov r4, #30
+  //Do a small delay reduced from 30 to 11 11/08/17
+  mov r4, #11
   .LWait1:
   sub r4, r4, #1
   cmp r4, #0
   bne .LWait1
-
+  //looping if gpio pin 16 is hi
   .LHI:
   //Read pin
   ldr r3, [r2 ,   #BCM2837_GPLEV0 ]
-  cmp r3, #0x10000
-  bne .LHI
+  lsr r3,#16
+  cmp r3,#1
+  beq .LHI
+
+  //Load the GPIO_IN address and value
+  ldr r0, .LGPIO_IN
+  ldr r1,[r0]
+  mov r1,#0
+  //Add the GPIO Pin 16 with the location
+  add r1,r1,r3
+  str r1,[r0]
   //Repeat the loop
   b .LLoop
 
   .LCounter:
   .long   Counter
+  .LGPIO_IN:
+  .long   GPIO_IN
  end;
  {$ENDIF CPUARM}   
 end;

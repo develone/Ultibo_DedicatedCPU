@@ -121,7 +121,7 @@ begin
   example again}
  SchedulerAllocationDisable(CPU_ID_3);
  ConsoleWindowWriteLn(Handle,'Disabled scheduler allocation for ' + CPUIDToString(CPU_ID_3));
- ConsoleWindowWriteLn(Handle,'Now using GPIOToggleUnit which has 2 procedures GPIOPinOn(pin) & GPIOPinOff(pin)');
+ ConsoleWindowWriteLn(Handle,'Now using asm language on RPi2 to toggle gpio ');
  
  
  {Our final step in the process is to migrate all of the other threads away from our dedicated CPU
