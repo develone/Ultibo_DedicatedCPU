@@ -22,7 +22,7 @@ uses
 
   
 {The start function which does all the setup work for our dedicated thread}
-procedure StartDedicatedThread(Handle:TWindowHandle);
+procedure StartDedicatedThreadGPS(Handle:TWindowHandle);
 
 
 implementation
@@ -34,21 +34,21 @@ var
  
 
 {Forward declaration of our dedicated CPU thread function}
-function DedicatedThreadExecute(Parameter:Pointer):PtrInt; forward;
+function DedicatedThreadExecutegps(Parameter:Pointer):PtrInt; forward;
  
 
 {This is the startup function which creates the dedicated CPU thread and handles all of
  the setup work to migrate other threads away from the selected CPU. The comments contain
  a lot of important information, make sure you read them well}
-procedure StartDedicatedThread(Handle:TWindowHandle);
+procedure StartDedicatedThreadGPS(Handle:TWindowHandle);
 var
- Last:LongWord;
- Count:Integer;
- Message:TMessage;
- CurrentCPU:LongWord;
- DedicatedThread:TThreadHandle;
- ThreadCurrent:PThreadSnapshot;
- ThreadSnapshot:PThreadSnapshot;
+ Lastgps:LongWord;
+ Countgps:Integer;
+ Messagegps:TMessage;
+ CurrentCPUgps:LongWord;
+ DedicatedThreadgps:TThreadHandle;
+ ThreadCurrentgps:PThreadSnapshot;
+ ThreadSnapshotgps:PThreadSnapshot;
  
 begin
  {Because parts of Ultibo core like the file system and network start in asynchronous mode
@@ -59,17 +59,17 @@ begin
   
   
  {Create another console window so we can track the progress of our thread later}
- RightWindow:=ConsoleWindowCreate(ConsoleDeviceGetDefault,CONSOLE_POSITION_RIGHT,False);
+ RightWindow:=ConsoleWindowCreate(ConsoleDeviceGetDefault,CONSOLE_POSITION_TOPRIGHT,False);
  
  
  {Some initial housekeeping just to be safe, check the number of CPUs available}
- if CPUGetCount < 4 then 
+ if CPUGetCount < 4 then
   begin
    {Less than 4 is bad, we can't continue with the example}
    ConsoleWindowWriteLn(Handle,'Error, less than 4 CPUs available');
    Exit;
   end;
- ConsoleWindowWriteLn(Handle,'CPU count is ' + IntToStr(CPUGetCount));
+ ConsoleWindowWriteLn(Handle,'CPU Countgps is ' + IntToStr(CPUGetCount));
  
  
  {First step is to create a new thread and assign it to the CPU that we want to take
@@ -78,34 +78,34 @@ begin
   
   We can do this in one step by calling the SysBeginThreadEx() function but we can also do it
   by using the normal BeginThread() function and then adjusting the CPU and affinity later}
- DedicatedThread:=BeginThread(@DedicatedThreadExecute,nil,DedicatedThread,THREAD_STACK_DEFAULT_SIZE);
- ConsoleWindowWriteLn(Handle,'Created dedicated CPU thread with handle ' + IntToHex(DedicatedThread,8));
+ DedicatedThreadgps:=BeginThread(@DedicatedThreadExecutegps,nil,DedicatedThreadgps,THREAD_STACK_DEFAULT_SIZE);
+ ConsoleWindowWriteLn(Handle,'Created dedicated CPU thread with handle ' + IntToHex(DedicatedThreadgps,8));
  
  
  {Let's set the name of our thread so we can see it in the thread list}
- ThreadSetName(DedicatedThread,'Dedicated CPU Thread');
- ConsoleWindowWriteLn(Handle,'Set name of thread to "Dedicated CPU Thread"');
+ ThreadSetName(DedicatedThreadgps,'Dedicated CPU Thread GPS');
+ ConsoleWindowWriteLn(Handle,'Set name of thread to "Dedicated CPU Thread GPS"');
  
  
  {Now we can set the affinity of our thread to CPU 2 and wait for the scheduler to migrate it for us}
- ThreadSetAffinity(DedicatedThread,CPU_AFFINITY_2);
+ ThreadSetAffinity(DedicatedThreadgps,CPU_AFFINITY_2);
  ConsoleWindowWriteLn(Handle,'Set affinity of dedicated CPU thread to ' + CPUIDToString(CPU_ID_2));
  
  
  {Migrations happen during context switches, so our thread may not be instantly on the new CPU, instead
   we check where our thread is and wait for it to migrate if needed}
- CurrentCPU:=ThreadGetCPU(DedicatedThread);
- if CurrentCPU <> CPU_ID_2 then
+ CurrentCPUgps:=ThreadGetCPU(DedicatedThreadgps);
+ if CurrentCPUgps <> CPU_ID_2 then
   begin
-   ConsoleWindowWriteLn(Handle,'Thread ' + IntToHex(DedicatedThread,8) + ' currently on ' + CPUIDToString(CurrentCPU));
+   ConsoleWindowWriteLn(Handle,'Thread ' + IntToHex(DedicatedThreadgps,8) + ' currently on ' + CPUIDToString(CurrentCPUgps));
    
    {Keep checking until it is migrated}
-   while ThreadGetCPU(DedicatedThread) <> CPU_ID_2 do
+   while ThreadGetCPU(DedicatedThreadgps) <> CPU_ID_2 do
     begin
      Sleep(1000);
     end;
   end;
- ConsoleWindowWriteLn(Handle,'Thread ' + IntToHex(DedicatedThread,8) + ' now on ' + CPUIDToString(ThreadGetCPU(DedicatedThread)));
+ ConsoleWindowWriteLn(Handle,'Thread ' + IntToHex(DedicatedThreadgps,8) + ' now on ' + CPUIDToString(ThreadGetCPU(DedicatedThreadgps)));
  
  
  {Now we disable thread migrations temporarily so that we don't have threads moving around while we
@@ -128,28 +128,28 @@ begin
   so they are able to continue running without any impact. To do this we need to know what threads
   are running on CPU 3, we can use the ThreadSnapshotCreate() function to get a current list}
  
- {We also want to count how many threads need to be migrated so we'll start with zero}
- Count:=0; 
+ {We also want to Countgps how many threads need to be migrated so we'll start with zero}
+ Countgps:=0; 
  
  
  {Then create a thread snapshot, the snapshot contains all of the thread information at a precise 
   point in time. The real thread information changes hundreds of times per second and so isn't easy
   to read directly}
- ThreadSnapshot:=ThreadSnapshotCreate;
- if ThreadSnapshot <> nil then
+ ThreadSnapshotgps:=ThreadSnapshotCreate;
+ if ThreadSnapshotgps <> nil then
   begin
   
    {Get the first thread in the snapshot}
-   ThreadCurrent:=ThreadSnapshot;
-   while ThreadCurrent <> nil do
+   ThreadCurrentgps:=ThreadSnapshotgps;
+   while ThreadCurrentgps <> nil do
     begin
     
      {Check the handle of the thread to make sure it is not our dedicated CPU thread}
-     if ThreadCurrent^.Handle <> DedicatedThread then
+     if ThreadCurrentgps^.Handle <> DedicatedThreadgps then
       begin
       
        {Check the CPU to see if it is on CPU 3}
-       if ThreadCurrent^.CPU = CPU_ID_2 then
+       if ThreadCurrentgps^.CPU = CPU_ID_2 then
         begin
         
          {In our normal configuration there are 4 threads on each CPU that we cannot migrate because
@@ -180,29 +180,29 @@ begin
               of the FIQ thread. In the same way the system uses the SWI thread to perform software interrupts}
          
          {Check for one of the special threads and if it is not then ask it to migrate}
-         if ThreadCurrent^.Handle = SchedulerGetThreadHandle(CPU_ID_2,THREAD_TYPE_IDLE) then
+         if ThreadCurrentgps^.Handle = SchedulerGetThreadHandle(CPU_ID_2,THREAD_TYPE_IDLE) then
           begin
           
            {This is the idle thread, we can't migrate this one}
-           ConsoleWindowWriteLn(Handle,'Skipping migration of idle thread "' + ThreadGetName(ThreadCurrent^.Handle) + '"');
+           ConsoleWindowWriteLn(Handle,'Skipping migration of idle thread "' + ThreadGetName(ThreadCurrentgps^.Handle) + '"');
           end
-         else if ThreadCurrent^.Handle = SchedulerGetThreadHandle(CPU_ID_2,THREAD_TYPE_IRQ) then  
+         else if ThreadCurrentgps^.Handle = SchedulerGetThreadHandle(CPU_ID_2,THREAD_TYPE_IRQ) then  
           begin
           
            {This one is the IRQ thread and it can't be migrated either}
-           ConsoleWindowWriteLn(Handle,'Skipping migration of IRQ thread "' + ThreadGetName(ThreadCurrent^.Handle) + '"');
+           ConsoleWindowWriteLn(Handle,'Skipping migration of IRQ thread "' + ThreadGetName(ThreadCurrentgps^.Handle) + '"');
           end
-         else if ThreadCurrent^.Handle = SchedulerGetThreadHandle(CPU_ID_2,THREAD_TYPE_FIQ) then  
+         else if ThreadCurrentgps^.Handle = SchedulerGetThreadHandle(CPU_ID_2,THREAD_TYPE_FIQ) then  
           begin
           
            {FIQ threads also can't be migrated but they never run so it doesn't matter}
-           ConsoleWindowWriteLn(Handle,'Skipping migration of FIQ thread "' + ThreadGetName(ThreadCurrent^.Handle) + '"');
+           ConsoleWindowWriteLn(Handle,'Skipping migration of FIQ thread "' + ThreadGetName(ThreadCurrentgps^.Handle) + '"');
           end
-         else if ThreadCurrent^.Handle = SchedulerGetThreadHandle(CPU_ID_2,THREAD_TYPE_SWI) then    
+         else if ThreadCurrentgps^.Handle = SchedulerGetThreadHandle(CPU_ID_2,THREAD_TYPE_SWI) then    
           begin
           
            {And the SWI threads are the same so we can ignore them as well}
-           ConsoleWindowWriteLn(Handle,'Skipping migration of SWI thread "' + ThreadGetName(ThreadCurrent^.Handle) + '"');
+           ConsoleWindowWriteLn(Handle,'Skipping migration of SWI thread "' + ThreadGetName(ThreadCurrentgps^.Handle) + '"');
           end
          else
           begin
@@ -210,11 +210,11 @@ begin
            {If the thread is not any of those then it must be a normal thread. Ask the scheduler to migrate it
             to CPU 0 instead, we could specify any CPU and we could try to round robin them but the scheduler 
             will rebalance anyway once we enable migrations again}
-           ThreadSetCPU(ThreadCurrent^.Handle,CPU_ID_0);
-           ConsoleWindowWriteLn(Handle,'Migrating thread "' + ThreadGetName(ThreadCurrent^.Handle) + '" to ' + CPUIDToString(CPU_ID_0));
+           ThreadSetCPU(ThreadCurrentgps^.Handle,CPU_ID_0);
+           ConsoleWindowWriteLn(Handle,'Migrating thread "' + ThreadGetName(ThreadCurrentgps^.Handle) + '" to ' + CPUIDToString(CPU_ID_0));
            
-           {Add one to our migrated thread count}
-           Inc(Count);
+           {Add one to our migrated thread Countgps}
+           Inc(Countgps);
           end;          
         end; 
       end
@@ -222,19 +222,19 @@ begin
       begin
       
        {No need to migrate our own thread, that wouldn't make any sense!}
-       ConsoleWindowWriteLn(Handle,'Skipping migration for "' + ThreadGetName(ThreadCurrent^.Handle) + '"');
+       ConsoleWindowWriteLn(Handle,'Skipping migration for "' + ThreadGetName(ThreadCurrentgps^.Handle) + '"');
       end;
      
      {Get the next thread from the snapshot}
-     ThreadCurrent:=ThreadCurrent^.Next;
+     ThreadCurrentgps:=ThreadCurrentgps^.Next;
     end; 
    
    {Remember to destroy the snapshot when we have finished using it}
-   ThreadSnapshotDestroy(ThreadSnapshot);
+   ThreadSnapshotDestroy(ThreadSnapshotgps);
   end; 
   
  {Print the number of threads that we asked to migrate}
- ConsoleWindowWriteLn(Handle,'Migrated ' + IntToStr(Count) +  ' threads from ' + CPUIDToString(CPU_ID_2));
+ ConsoleWindowWriteLn(Handle,'Migrated ' + IntToStr(Countgps) +  ' threads from ' + CPUIDToString(CPU_ID_2));
  
  {As we saw above, thread migrations happen during context switches. So even though we asked each of 
   the threads above to migrate they may not neccessarily have done that if they haven't performed a
@@ -244,55 +244,55 @@ begin
   Let's sleep for a second and then quickly run through a new snapshot to check if everyone has migrated}
  Sleep(1000);
  
- {Create the snapshot and reset the count}
- Count:=0;
- ThreadSnapshot:=ThreadSnapshotCreate;
- if ThreadSnapshot <> nil then
+ {Create the snapshot and reset the Countgps}
+ Countgps:=0;
+ ThreadSnapshotgps:=ThreadSnapshotCreate;
+ if ThreadSnapshotgps <> nil then
   begin
    {Get the first thread}
-   ThreadCurrent:=ThreadSnapshot;
-   while ThreadCurrent <> nil do
+   ThreadCurrentgps:=ThreadSnapshotgps;
+   while ThreadCurrentgps <> nil do
     begin
      {Check the handle and the CPU}
-     if (ThreadCurrent^.Handle <> DedicatedThread) and (ThreadCurrent^.CPU = CPU_ID_2) then
+     if (ThreadCurrentgps^.Handle <> DedicatedThreadgps) and (ThreadCurrentgps^.CPU = CPU_ID_2) then
       begin
-       if (ThreadCurrent^.Handle <> SchedulerGetThreadHandle(CPU_ID_2,THREAD_TYPE_IDLE))
-        and (ThreadCurrent^.Handle <> SchedulerGetThreadHandle(CPU_ID_2,THREAD_TYPE_IRQ))
-        and (ThreadCurrent^.Handle <> SchedulerGetThreadHandle(CPU_ID_2,THREAD_TYPE_FIQ))
-        and (ThreadCurrent^.Handle <> SchedulerGetThreadHandle(CPU_ID_2,THREAD_TYPE_SWI)) then
+       if (ThreadCurrentgps^.Handle <> SchedulerGetThreadHandle(CPU_ID_2,THREAD_TYPE_IDLE))
+        and (ThreadCurrentgps^.Handle <> SchedulerGetThreadHandle(CPU_ID_2,THREAD_TYPE_IRQ))
+        and (ThreadCurrentgps^.Handle <> SchedulerGetThreadHandle(CPU_ID_2,THREAD_TYPE_FIQ))
+        and (ThreadCurrentgps^.Handle <> SchedulerGetThreadHandle(CPU_ID_2,THREAD_TYPE_SWI)) then
         begin
-         {Add one to our count}
-         Inc(Count);
+         {Add one to our Countgps}
+         Inc(Countgps);
         end;
       end;
       
      {Get the next thread}
-     ThreadCurrent:=ThreadCurrent^.Next;
+     ThreadCurrentgps:=ThreadCurrentgps^.Next;
     end;
     
    {Destroy the snapshot}
-   ThreadSnapshotDestroy(ThreadSnapshot);
+   ThreadSnapshotDestroy(ThreadSnapshotgps);
   end;
 
   
- {Check the count to see if any threads have not migrated yet, we won't proceed if there are any.
+ {Check the Countgps to see if any threads have not migrated yet, we won't proceed if there are any.
  
   If you are trying the example with the line from the InitUnit commented out, then take a look at
   the "Thread List" to see which threads did not migrate even though we asked them to. 
   
   Can you see why they didn't migrate?}
- if Count <> 0 then
+ if Countgps <> 0 then
   begin
-   ConsoleWindowWriteLn(Handle,'Error, ' + IntToStr(Count) +  ' threads remaining on ' + CPUIDToString(CPU_ID_2));
+   ConsoleWindowWriteLn(Handle,'Error, ' + IntToStr(Countgps) +  ' threads remaining on ' + CPUIDToString(CPU_ID_2));
    Exit;
   end;
  ConsoleWindowWriteLn(Handle,'No threads remaining on ' + CPUIDToString(CPU_ID_2) + ' proceeding with example');
  
  
  {Send a message to our dedicated CPU thread to tell it we are done and it can go ahead}
- FillChar(Message,SizeOf(TMessage),0);
- ThreadSendMessage(DedicatedThread,Message);
- ConsoleWindowWriteLn(Handle,'Sent a message to the dedicated CPU thread');
+ FillChar(Messagegps,SizeOf(TMessage),0);
+ ThreadSendMessage(DedicatedThreadgps,Messagegps);
+ ConsoleWindowWriteLn(Handle,'Sent a Messagegps to the dedicated CPU thread');
  
  
  {Enable thread migrations now that we are all done, the scheduler will not touch our dedicated CPU}
@@ -303,16 +303,16 @@ begin
  {Because our dedicated CPU thread won't be able to print on the console, we'll go into a loop here
   and print the value of the Countergps variable that it is incrementing. That way you can see just how 
   many loops it can do in a second}
- Last:=0;
+ Lastgps:=0;
  while True do
   begin
    {Check if anything has happened}
-   if Last <> Countergps then
+   if Lastgps <> Countergps then
     begin
      {Print the Countergps value on the right window}
-     ConsoleWindowWriteLn(RightWindow,'Countergps value is ' + IntToStr(Countergps) + ', Difference is ' + IntToStr(Countergps - Last));
+     ConsoleWindowWriteLn(RightWindow,'Countergps value is ' + IntToStr(Countergps) + ', Difference is ' + IntToStr(Countergps - Lastgps));
     end;
-   Last:=Countergps; 
+   Lastgps:=Countergps; 
    
    {Wait one second}
    Sleep(1000);
@@ -324,15 +324,15 @@ end;
  you need to understand the rules about what you can and can't do when taking over
  a CPU for real time use. Again the comments in this function explain many of the
  things you need to know so read them carefully before using this in your own programs} 
-function DedicatedThreadExecute(Parameter:Pointer):PtrInt;
+function DedicatedThreadExecutegps(Parameter:Pointer):PtrInt;
 var
- StartCount:Int64;
- CurrentCount:Int64;
- Message:TMessage;
+ StartCountgps:Int64;
+ CurrentCountgps:Int64;
+ Messagegps:TMessage;
 begin
 
  Result:=0;
- GPIOFunctionSelect(GPIO_PIN_16,GPIO_FUNCTION_OUT);
+ //GPIOFunctionSelect(GPIO_PIN_16,GPIO_FUNCTION_OUT);
  {Do a loop while we are not on our dedicated CPU}
  ConsoleWindowWriteLn(RightWindow,'Waiting for migration to ' + CPUIDToString(CPU_ID_2));
  while ThreadGetCPU(ThreadGetCurrent) <> CPU_ID_2 do
@@ -341,10 +341,10 @@ begin
   end;
  
  
- {Wait for a message from the main thread to say we are ready to go}
- ConsoleWindowWriteLn(RightWindow,'Waiting for a message from the main thread');
- ThreadReceiveMessage(Message);
- ConsoleWindowWriteLn(RightWindow,'Received a message, taking control of CPU');
+ {Wait for a Messagegps from the main thread to say we are ready to go}
+ ConsoleWindowWriteLn(RightWindow,'Waiting for a Messagegps from the main thread');
+ ThreadReceiveMessage(Messagegps);
+ ConsoleWindowWriteLn(RightWindow,'Received a Messagegps, taking control of CPU');
  
  
  {Now that we are in control, let's disable preemption so the scheduler won't
@@ -361,7 +361,7 @@ begin
   will not switch away from our thread. If you look at the "CPU" page in web status while this
   is happening you will see the CPU utilization runs at 100% for CPU 3}
  Countergps:=0;
- StartCount:=GetTickCount64;
+ StartCountgps:=GetTickCount64;
  while True do
   begin
    {Increment our loop Countergps}
@@ -369,8 +369,8 @@ begin
    
    {See how much time has elapsed since we started the loop, 30,000 milliseconds (or 30 seconds)
     should be enough time for you to see what is happening but you can extend it if you like}
-   CurrentCount:=GetTickCount64;
-   if CurrentCount > (StartCount + 5000) then Break;
+   CurrentCountgps:=GetTickCount64;
+   if CurrentCountgps > (StartCountgps + 5000) then Break;
    
    {There's no need to sleep on each loop, this is our CPU and no one can tell us what to do.
    
@@ -411,15 +411,15 @@ begin
  
  {Go back to looping and counting, the main thread is still watching so it will continue printing
   the Countergps values while we do this as well}
- StartCount:=GetTickCount64;
+ StartCountgps:=GetTickCount64;
  while True do
   begin
    {Increment our loop Countergps}
    Inc(Countergps);
 
    {Check our tick count for elapsed time}
-   CurrentCount:=GetTickCount64;
-   if CurrentCount > (StartCount + 5000) then Break;
+   CurrentCountgps:=GetTickCount64;
+   if CurrentCountgps > (StartCountgps + 5000) then Break;
    
    {No sleeping here, this is a realtime only thread. Seriously you cannot sleep in this scenario, go
     on try it if you don't believe me and see what happens}

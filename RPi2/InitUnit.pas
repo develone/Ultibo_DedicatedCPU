@@ -20,4 +20,6 @@ implementation
 initialization
  {Disable thread allocation for CPU 3}
  SchedulerAllocationDisable(CPU_ID_3);
+ {Disable thread allocation for CPU 2}
+ SchedulerAllocationDisable(CPU_ID_2);
 end.

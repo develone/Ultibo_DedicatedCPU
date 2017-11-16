@@ -37,6 +37,7 @@ uses
   Console,
   HTTP,         {Include HTTP and WebStatus so we can see from a web browser what is happening}
   WebStatus,
+  ThreadUnit_GPS,
   ThreadUnit,   {Include our thread unit which contains most of the example}
   uTFTP,
   Winsock2,
@@ -70,8 +71,9 @@ begin
  WebStatusRegister(HTTPListener,'','',True);
  
  {Start our dedicated CPU thread}
+ //StartDedicatedThread(LeftWindow);
+ StartDedicatedThreadGPS(LeftWindow);
  StartDedicatedThread(LeftWindow);
- 
  {Halt this thread}
  ThreadHalt(0);
 end.

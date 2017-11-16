@@ -59,7 +59,7 @@ begin
   
   
  {Create another console window so we can track the progress of our thread later}
- RightWindow:=ConsoleWindowCreate(ConsoleDeviceGetDefault,CONSOLE_POSITION_RIGHT,False);
+ RightWindow:=ConsoleWindowCreate(ConsoleDeviceGetDefault,CONSOLE_POSITION_BOTTOMRIGHT,False);
  
  
  {Some initial housekeeping just to be safe, check the number of CPUs available}
@@ -79,18 +79,17 @@ begin
   We can do this in one step by calling the SysBeginThreadEx() function but we can also do it
   by using the normal BeginThread() function and then adjusting the CPU and affinity later}
  DedicatedThread:=BeginThread(@DedicatedThreadExecute,nil,DedicatedThread,THREAD_STACK_DEFAULT_SIZE);
+  
  ConsoleWindowWriteLn(Handle,'Created dedicated CPU thread with handle ' + IntToHex(DedicatedThread,8));
- 
+  
  
  {Let's set the name of our thread so we can see it in the thread list}
  ThreadSetName(DedicatedThread,'Dedicated CPU Thread');
  ConsoleWindowWriteLn(Handle,'Set name of thread to "Dedicated CPU Thread"');
  
- 
  {Now we can set the affinity of our thread to CPU 3 and wait for the scheduler to migrate it for us}
  ThreadSetAffinity(DedicatedThread,CPU_AFFINITY_3);
  ConsoleWindowWriteLn(Handle,'Set affinity of dedicated CPU thread to ' + CPUIDToString(CPU_ID_3));
- 
  
  {Migrations happen during context switches, so our thread may not be instantly on the new CPU, instead
   we check where our thread is and wait for it to migrate if needed}
